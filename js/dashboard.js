@@ -70,6 +70,23 @@ document.addEventListener('DOMContentLoaded', function() {
             generateInviteWelcomeBtn.addEventListener('click', handleGenerateInvite);
         }
 
+        // Follow buttons
+        const followButtons = document.querySelectorAll('.follow-btn');
+        followButtons.forEach(btn => {
+            btn.addEventListener('click', handleFollowAction);
+        });
+
+        // Prevent user item clicks when clicking follow buttons
+        const userItems = document.querySelectorAll('.user-item');
+        userItems.forEach(item => {
+            const followBtn = item.querySelector('.follow-btn');
+            if (followBtn) {
+                followBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+
         // Enter key to send message
         const messageInput = document.getElementById('message-input');
         if (messageInput) {
@@ -99,6 +116,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Redirect to conversation
         window.location.href = `dashboard.php?conversation=${userId}`;
+    }
+
+    async function handleFollowAction(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn = e.target;
+        const userId = btn.dataset.userId;
+        const csrfToken = btn.dataset.csrfToken;
+        const originalText = btn.textContent;
+        const isFollowing = btn.classList.contains('following');
+
+        // Disable button and show loading state
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+
+        try {
+            const formData = new FormData();
+            formData.append('action', isFollowing ? 'unfollow' : 'follow');
+            formData.append('user_id', userId);
+            formData.append('csrf_token', csrfToken);
+
+            const response = await fetch('follow.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (isFollowing) {
+                    // Unfollowed
+                    btn.textContent = 'Follow';
+                    btn.classList.remove('following');
+                    showMessage(result.message || 'User unfollowed', 'success');
+
+                    // Update mutual indicator if it exists
+                    const mutualIndicator = btn.parentElement.querySelector('.mutual-indicator');
+                    if (mutualIndicator) {
+                        mutualIndicator.remove();
+                    }
+                } else {
+                    // Followed
+                    btn.textContent = 'Following';
+                    btn.classList.add('following');
+                    showMessage(result.message || 'User followed', 'success');
+                }
+
+                // Refresh presence indicators and user data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showMessage(result.error || 'Failed to update follow status', 'error');
+                btn.textContent = originalText;
+            }
+        } catch (error) {
+            console.error('Follow action error:', error);
+            showMessage('Network error. Please try again.', 'error');
+            btn.textContent = originalText;
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     async function handleSendMessage(e) {
