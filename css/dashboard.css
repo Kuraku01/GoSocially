@@ -288,7 +288,7 @@ body {
     border-radius: 3px;
 }
 
-/* Online Indicator */
+/* Presence Indicators */
 .online-indicator {
     width: 8px;
     height: 8px;
@@ -296,6 +296,240 @@ body {
     border-radius: 50%;
     display: inline-block;
     box-shadow: 0 0 4px rgba(81,207,102,0.5);
+}
+
+.presence-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 8px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.presence-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+}
+
+.presence-active {
+    background: #28a745;
+    box-shadow: 0 0 8px rgba(40,167,69,0.6);
+}
+
+.presence-busy {
+    background: #ffc107;
+    box-shadow: 0 0 8px rgba(255,193,7,0.6);
+}
+
+.presence-busy::before {
+    content: '⏱';
+    position: absolute;
+    top: -12px;
+    right: -8px;
+    font-size: 10px;
+    color: #ffc107;
+}
+
+.presence-invisible {
+    background: #6c757d;
+    box-shadow: 0 0 8px rgba(108,117,125,0.6);
+}
+
+.presence-offline {
+    background: #dc3545;
+    box-shadow: 0 0 8px rgba(220,53,69,0.6);
+}
+
+.presence-text {
+    font-size: 12px;
+    color: #6c757d;
+    margin-left: 5px;
+}
+
+/* User Info Row Layout */
+.user-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Follow System */
+.mutual-indicator {
+    background: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.follow-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.follow-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+.follow-btn.following {
+    background: #28a745;
+}
+
+.follow-btn.following:hover {
+    background: #218838;
+}
+
+/* Enhanced User Directory Items */
+.user-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f3f4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.user-item:hover {
+    background: #f8f9fa;
+    transform: translateX(2px);
+}
+
+/* Enhanced Conversations */
+.conversation-item {
+    padding: 12px;
+    border-bottom: 1px solid #f0f3f4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conversation-item:hover {
+    background: #f8f9fa;
+    transform: translateX(2px);
+}
+
+.conversation-item.active {
+    background: #e3f2fd;
+    border-left: 3px solid #00C6F0;
+    transform: translateX(0);
+}
+
+/* Report and Admin Links */
+.admin-link {
+    background: #dc3545;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.admin-link:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: white;
+}
+
+.report-link {
+    background: #ffc107;
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-left: 5px;
+}
+
+.report-link:hover {
+    background: #e0a800;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #000;
+}
+
+/* Enhanced Status Display */
+.chat-recipient {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Profile Settings Link */
+.profile-link {
+    color: #00C6F0;
+    text-decoration: none;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.profile-link:hover {
+    background: rgba(0,198,240,0.1);
+    text-decoration: none;
+    color: #00a8d0;
+}
+
+/* Enhanced Header */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-left h1 {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.user-info .presence-indicator {
+    align-self: center;
 }
 
 /* Main Content */
