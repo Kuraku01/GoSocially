@@ -4,6 +4,9 @@
 
 require_once 'includes/auth.php';
 require_once 'includes/functions.php';
+require_once 'includes/profile_functions.php';
+require_once 'includes/follow_functions.php';
+require_once 'includes/restrictions.php';
 
 // Require login to access dashboard
 requireLogin();
@@ -39,6 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             if ($receiverId <= 0 || empty($messageText)) {
                 throw new Exception("Invalid message data");
+            }
+
+            // Check messaging permissions
+            if (!canUserMessage($currentUser['id'], $receiverId)) {
+                $reason = getMessagingRestrictionReason($currentUser['id'], $receiverId);
+                throw new Exception($reason ?: "You cannot message this user");
             }
 
             sendMessage($currentUser['id'], $receiverId, $messageText);
@@ -102,9 +111,13 @@ $csrfToken = generateCSRFToken();
         <h1><span class="logo_colour">GoSocially</span></h1>
         <div class="user-info">
           Welcome back, <strong><?php echo htmlspecialchars($currentUser['full_name'] ?: $currentUser['username']); ?></strong>
+          <?php echo getPresenceIndicator($currentUser['id']); ?>
           <?php if ($unreadCount > 0): ?>
             <span class="unread-badge"><?php echo $unreadCount; ?></span>
           <?php endif; ?>
+          <div style="margin-top: 5px;">
+            <a href="profile.php" style="color: #667eea; text-decoration: none; font-size: 0.9em;">Profile Settings</a>
+          </div>
         </div>
       </div>
       <div class="header-right">
@@ -137,9 +150,7 @@ $csrfToken = generateCSRFToken();
                   <div class="conversation-info">
                     <div class="conversation-name">
                       <?php echo htmlspecialchars($conversation['full_name'] ?: $conversation['username']); ?>
-                      <?php if (isUserOnline($conversation['last_login'])): ?>
-                        <span class="online-indicator"></span>
-                      <?php endif; ?>
+                      <?php echo getPresenceIndicator($conversation['other_user_id']); ?>
                     </div>
                     <div class="conversation-time">
                       <?php echo formatDateTime($conversation['last_message_time']); ?>
@@ -163,11 +174,25 @@ $csrfToken = generateCSRFToken();
                 <div class="user-item" data-user-id="<?php echo $user['id']; ?>">
                   <div class="user-name">
                     <?php echo htmlspecialchars($user['full_name'] ?: $user['username']); ?>
-                    <?php if (isUserOnline($user['last_login'])): ?>
-                      <span class="online-indicator"></span>
-                    <?php endif; ?>
+                    <?php echo getPresenceIndicator($user['id']); ?>
                   </div>
-                  <div class="user-role"><?php echo htmlspecialchars($user['role']); ?></div>
+                  <div class="user-info-row">
+                    <div class="user-role"><?php echo htmlspecialchars($user['role']); ?></div>
+                    <div class="user-actions">
+                      <?php
+                      $isFollowing = isFollowing($currentUser['id'], $user['id']);
+                      $areMutuals = areMutuals($currentUser['id'], $user['id']);
+                      ?>
+                      <?php if ($areMutuals): ?>
+                        <span class="mutual-indicator">Mutuals</span>
+                      <?php endif; ?>
+                      <button class="follow-btn <?php echo $isFollowing ? 'following' : ''; ?>"
+                              data-user-id="<?php echo $user['id']; ?>"
+                              data-csrf-token="<?php echo $csrfToken; ?>">
+                        <?php echo $isFollowing ? 'Following' : 'Follow'; ?>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               <?php endif; ?>
             <?php endforeach; ?>
@@ -183,11 +208,7 @@ $csrfToken = generateCSRFToken();
             <div class="chat-header">
               <div class="chat-recipient">
                 <h3><?php echo htmlspecialchars($selectedConversation['full_name'] ?: $selectedConversation['username']); ?></h3>
-                <?php if (isUserOnline($selectedConversation['last_login'])): ?>
-                  <span class="status-text">Online</span>
-                <?php else: ?>
-                  <span class="status-text">Last seen: <?php echo formatDateTime($selectedConversation['last_login']); ?></span>
-                <?php endif; ?>
+                <?php echo getPresenceIndicator($selectedConversation['other_user_id'], true); ?>
               </div>
             </div>
 
