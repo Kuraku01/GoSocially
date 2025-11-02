@@ -3,6 +3,7 @@
 // Secure user authentication functions
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/admin_functions.php';
 
 // Start secure session
 function startSecureSession() {
@@ -51,6 +52,12 @@ function login($username, $password) {
 
     if (!password_verify($password, $user['password_hash'])) {
         throw new Exception("Invalid username or password");
+    }
+
+    // Check user restrictions
+    $loginCheck = canUserLogin($user['id']);
+    if (!$loginCheck['can_login']) {
+        throw new Exception($loginCheck['reason']);
     }
 
     // Update last login time
@@ -115,12 +122,21 @@ function requireLogin() {
     }
 }
 
-// Require specific role
+// Require specific role(s)
 function requireRole($requiredRole) {
     requireLogin();
 
     $user = getCurrentUser();
-    if (!$user || $user['role'] !== $requiredRole) {
+    if (!$user) {
+        header('HTTP/1.0 403 Forbidden');
+        echo "Access denied. User not found.";
+        exit();
+    }
+
+    // Support array of roles or single role
+    $allowedRoles = is_array($requiredRole) ? $requiredRole : [$requiredRole];
+
+    if (!in_array($user['role'], $allowedRoles)) {
         header('HTTP/1.0 403 Forbidden');
         echo "Access denied. Insufficient privileges.";
         exit();

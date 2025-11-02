@@ -244,8 +244,121 @@ function formatDateTime($dateTime) {
     }
 }
 
-// Function to check if user is online (last activity within 5 minutes)
-function isUserOnline($lastLogin) {
+// Function to check if user is online (last activity within 5 minutes) respecting user settings
+function isUserOnline($userId) {
+    $db = Database::getInstance()->getConnection();
+
+    // Get user's presence settings
+    $stmt = $db->prepare("SELECT show_online_status, presence_status FROM user_settings WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $settings = $stmt->fetch();
+
+    // If user doesn't want to show online status or is invisible, return false
+    if (!$settings || $settings['show_online_status'] == 0 || $settings['presence_status'] == 'invisible') {
+        return false;
+    }
+
+    // Original online logic for active/busy users
+    $stmt = $db->prepare("SELECT last_login FROM users WHERE id = ? AND last_login > DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+    $stmt->execute([$userId]);
+    return $stmt->fetch() !== false;
+}
+
+// Function to get user's presence status
+function getUserPresenceStatus($userId) {
+    $db = Database::getInstance()->getConnection();
+
+    $stmt = $db->prepare("SELECT presence_status FROM user_settings WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $result = $stmt->fetch();
+
+    return $result ? $result['presence_status'] : 'active';
+}
+
+// Function to update user's presence status
+function updatePresenceStatus($userId, $status) {
+    $db = Database::getInstance()->getConnection();
+
+    $validStatuses = ['active', 'busy', 'invisible'];
+    if (!in_array($status, $validStatuses)) {
+        return false;
+    }
+
+    // Check if user settings exist
+    $stmt = $db->prepare("SELECT id FROM user_settings WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $exists = $stmt->fetch();
+
+    if ($exists) {
+        $stmt = $db->prepare("UPDATE user_settings SET presence_status = ? WHERE user_id = ?");
+        return $stmt->execute([$status, $userId]);
+    } else {
+        $stmt = $db->prepare("INSERT INTO user_settings (user_id, presence_status) VALUES (?, ?)");
+        return $stmt->execute([$userId, $status]);
+    }
+}
+
+// Function to get presence indicator HTML with appropriate styling
+function getPresenceIndicator($userId, $showText = false) {
+    $db = Database::getInstance()->getConnection();
+
+    // Get user's settings and last login
+    $stmt = $db->prepare("
+        SELECT us.presence_status, us.show_online_status, u.last_login
+        FROM user_settings us
+        JOIN users u ON us.user_id = u.id
+        WHERE us.user_id = ?
+    ");
+    $stmt->execute([$userId]);
+    $data = $stmt->fetch();
+
+    if (!$data) {
+        // Default to active if no settings exist
+        $presenceStatus = 'active';
+        $showOnlineStatus = 1;
+        $lastLogin = null;
+    } else {
+        $presenceStatus = $data['presence_status'];
+        $showOnlineStatus = $data['show_online_status'];
+        $lastLogin = $data['last_login'];
+    }
+
+    // Don't show if user doesn't want to show online status or is invisible
+    if (!$showOnlineStatus || $presenceStatus == 'invisible') {
+        return '';
+    }
+
+    // Check if actually online
+    $isOnline = $lastLogin && (strtotime($lastLogin) > (time() - 300));
+
+    if (!$isOnline) {
+        $class = 'presence-offline';
+        $text = 'Offline';
+    } else {
+        switch ($presenceStatus) {
+            case 'busy':
+                $class = 'presence-busy';
+                $text = 'Busy';
+                break;
+            case 'active':
+            default:
+                $class = 'presence-active';
+                $text = 'Active';
+                break;
+        }
+    }
+
+    $indicator = '<span class="presence-indicator ' . $class . '"></span>';
+
+    if ($showText) {
+        $indicator .= ' <span class="presence-text">' . $text . '</span>';
+    }
+
+    return $indicator;
+}
+
+// Legacy function for backward compatibility
+function isUserOnlineLegacy($lastLogin) {
     if (empty($lastLogin)) {
         return false;
     }
