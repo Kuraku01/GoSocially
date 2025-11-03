@@ -209,8 +209,12 @@ $csrfToken = generateCSRFToken();
 
     .toggle-switch input {
       opacity: 0;
-      width: 0;
-      height: 0;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      cursor: pointer;
+      margin: 0;
+      z-index: 1;
     }
 
     .toggle-slider {
