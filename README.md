@@ -111,11 +111,11 @@ After importing the seed data, you can use these test accounts:
 
 | Username | Password | Role |
 |----------|----------|------|
-| admin | password123 | Administrator |
-| moderator | password123 | Moderator |
-| user1 | password123 | User |
-| user2 | password123 | User |
-| user3 | password123 | User |
+| admin | password | Administrator |
+| moderator | password | Moderator |
+| user1 | password | User |
+| user2 | password | User |
+| user3 | password | User |
 
 ## Usage
 
