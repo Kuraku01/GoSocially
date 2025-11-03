@@ -3,6 +3,7 @@
 // Invite-only user registration
 
 require_once 'includes/auth.php';
+require_once 'includes/functions.php';
 
 // Redirect to dashboard if already logged in
 if (isLoggedIn()) {

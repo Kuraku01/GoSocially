@@ -64,29 +64,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 // Get selected conversation
 $selectedConversation = null;
 $messages = [];
+$conversationError = '';
 
 if (isset($_GET['conversation']) && is_numeric($_GET['conversation'])) {
     $otherUserId = (int)$_GET['conversation'];
 
-    // Verify this user is part of the conversation
-    $selectedConversation = null;
+    // Get the other user info
+    $otherUser = getUserById($otherUserId);
+
+    if (!$otherUser) {
+        $conversationError = 'User not found.';
+        header('Location: dashboard.php');
+        exit();
+    }
+
+    // Check if they are mutuals
+    if (!areMutuals($currentUser['id'], $otherUserId)) {
+        $conversationError = 'You can only start conversations with mutuals.';
+        header('Location: dashboard.php');
+        exit();
+    }
+
+    // Check messaging permissions
+    if (!canUserMessage($currentUser['id'], $otherUserId)) {
+        $reason = getMessagingRestrictionReason($currentUser['id'], $otherUserId);
+        $conversationError = $reason ?: "You cannot message this user";
+        header('Location: dashboard.php');
+        exit();
+    }
+
+    // Create selected conversation data
+    $selectedConversation = [
+        'other_user_id' => $otherUserId,
+        'username' => $otherUser['username'],
+        'full_name' => $otherUser['full_name'],
+        'last_login' => $otherUser['last_login']
+    ];
+
+    // Check if there's an existing conversation
+    $existingConv = null;
     foreach ($conversations as $conv) {
         if ($conv['other_user_id'] == $otherUserId) {
-            $selectedConversation = $conv;
+            $existingConv = $conv;
             break;
         }
     }
 
-    if ($selectedConversation) {
-        // Mark messages as read
+    if ($existingConv) {
+        // Mark messages as read for existing conversation
         markMessagesAsRead($otherUserId, $currentUser['id']);
-
-        // Get conversation messages
-        $messages = getMessages($currentUser['id'], $otherUserId, 50);
-
-        // Update unread count
-        $unreadCount = getUnreadMessageCount($currentUser['id']);
     }
+
+    // Get conversation messages (will be empty for new conversations)
+    $messages = getMessages($currentUser['id'], $otherUserId, 50);
+
+    // Update unread count
+    $unreadCount = getUnreadMessageCount($currentUser['id']);
 }
 
 // Generate CSRF token
@@ -100,6 +133,7 @@ $csrfToken = generateCSRFToken();
   <meta name="keywords" content="dashboard, messaging, chat, social" />
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<?php echo $csrfToken; ?>">
   <link rel="stylesheet" type="text/css" href="style.css" />
   <link rel="stylesheet" type="text/css" href="css/dashboard.css" />
 </head>

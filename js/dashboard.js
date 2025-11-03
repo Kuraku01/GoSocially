@@ -77,8 +77,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Prevent user item clicks when clicking follow buttons
-        const userItems = document.querySelectorAll('.user-item');
-        userItems.forEach(item => {
+        const userItemsForStop = document.querySelectorAll('.user-item');
+        userItemsForStop.forEach(item => {
             const followBtn = item.querySelector('.follow-btn');
             if (followBtn) {
                 followBtn.addEventListener('click', function(e) {
@@ -330,8 +330,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function handleGenerateInvite() {
-        const btn = event.target;
+    async function handleGenerateInvite(event) {
+        // Accept event param and prefer currentTarget to get the button element
+        const btn = event.currentTarget || event.target;
         const originalText = btn.textContent;
 
         btn.disabled = true;

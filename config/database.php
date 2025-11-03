@@ -103,4 +103,9 @@ function dbExecute($sql, $params = []) {
 function dbLastInsertId() {
     return Database::getInstance()->getConnection()->lastInsertId();
 }
+
+// Backwards-compatibility: expose a global $pdo variable for older files
+// that expect a PDO instance in the global scope (e.g., legacy code).
+// Prefer using the Database class or db* helpers in new code.
+$pdo = Database::getInstance()->getConnection();
 ?>
